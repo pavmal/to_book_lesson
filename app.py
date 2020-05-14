@@ -1,10 +1,37 @@
 import os, json, random
 from flask import Flask, render_template, request
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField, RadioField
+from wtforms.validators import Length, DataRequired, InputRequired
 from flask_debugtoolbar import DebugToolbarExtension
 
+# import data
+
+SECRET_KEY = os.urandom(32)
+timers = {'1': '1-2 часа', '2': '3-5 часов', '3': '5-7 часов', '4': '7-10 часов'}
 
 app = Flask(__name__)
-SECRET_KEY = os.urandom(32)
+app.secret_key = SECRET_KEY
+
+
+class UserForm(FlaskForm):
+    """
+    name: поле формы для ввода имени
+    tel: поле для ввода телефона
+    goal: поле для отражения цели обучения
+    time_hour: поле для отражения времени занятия
+    submit: кнопка отправки текста на обработку
+    """
+    client = StringField('Имя пользователя', validators=[Length(min=0, max=100), InputRequired()])
+    tel = StringField('Телефон пользователя', validators=[Length(min=0, max=15), InputRequired()])
+    goal = RadioField('Какая цель занятий?',
+                      choices=[('travel', 'Для путешествий'), ('study', 'Для учебы'), ('work', 'Для работы'),
+                               ('relocate', 'Для переезда')], default='travel', validators=[DataRequired()])
+    time_hour = RadioField('Учиться в неделю',
+                           choices=[('1', '1-2 часа'), ('2', '3-5 часов'), ('3', '5-7 часов'), ('4', '7-10 часов')],
+                           default='2', validators=[DataRequired()])
+    submit = SubmitField('Запись данных')
+
 
 @app.route('/')
 def render_main():
@@ -12,40 +39,28 @@ def render_main():
     Представление главной страницы
     :return: 'Здесь будет Главная страница'
     """
-#    print(teachers[0]['name'])
     list_teachers = random.sample(teachers, k=6)
-#    list_teachers = list_teachers.sort(key=lambda x: x['rating'])
     return render_template('index.html', list_goals=goals, list_teachers=list_teachers)
 
 
 @app.route('/goals/<goal_id>/')
 def render_goals(goal_id):
     """
-    Представление страницы с преподавателями по направлениями
-    :return: 'Здесь будет список преподавателей с учетом направлений'
+    Представление страницы с репетиторами по направлениями
+    :return: 'Здесь будет список репетиторов с учетом направлений'
     """
- #   print(request.path)
-    goal_id = request.path.split('/')[-2]
     one_goal = {key: val for key, val in goals.items() if key == goal_id}
     short_list_teachers = [teacher for teacher in teachers if goal_id in teacher['goals']]
-
-#    goal_teachers = {key: depart for key, depart in data.departures.items() if key == direct}
-#    short_list_tours = {num: tour for num, tour in data.tours.items() if tour['departure'] == direct}
-    print(goal_id)
-    print(one_goal)
-    print(len(short_list_teachers))
     return render_template('goal.html', list_goals=one_goal, list_teachers=short_list_teachers)
 
 
-@app.route('/profiles/<teacher_id>/')
+@app.route('/profiles/<int:teacher_id>/')
 def render_teachers(teacher_id):
     """
-    Представление страницы с профилем преподавателя
-    :return: 'Здесь будет профиль преподавателя'
+    Представление страницы с профилем репетитора
+    :return: 'Здесь будет профиль репетитора'
     """
- #   print(request.path)
-    teacher_id = request.path.split('/')[-2]
-    one_teacher = [teacher for teacher in teachers if teacher['id'] == int(teacher_id)]
+    one_teacher = [teacher for teacher in teachers if teacher['id'] == teacher_id]
     short_list_goals = {key: goal for key, goal in goals.items() if key in one_teacher[0]['goals']}
     list_free = []
     Mon = [hour for hour, val in one_teacher[0]['free']['mon'].items() if val == True]
@@ -62,12 +77,64 @@ def render_teachers(teacher_id):
     list_free.append({'Суббота': Sat})
     Sun = [hour for hour, val in one_teacher[0]['free']['sun'].items() if val == True]
     list_free.append({'Воскресенье': Sun})
-
-    for elem in list_free:
-        for k, v in elem.items():
-            print(k, v)
-    print(list_free)
     return render_template('profile.html', list_goals=short_list_goals, list_teachers=one_teacher, schedule=list_free)
+
+
+@app.route('/booking/<int:teacher_id>/<day>/<hour>/')
+def render_booking(teacher_id, day, hour):
+    """
+    Представление страницы с оформлением бронирования урока репетитора
+    :return: 'Здесь будет форма бронирования урока репетитора'
+    """
+    form = UserForm()
+    print(teacher_id, day, hour)
+    one_teacher = [teacher for teacher in teachers if teacher['id'] == teacher_id]
+    return render_template('booking.html', list_teachers=one_teacher, day=day, hour=hour, form=form)
+
+
+@app.route('/booking_done/<int:teacher_id>/<day>/<hour>/', methods=['POST'])
+def render_booking_done(teacher_id, day, hour):
+    """
+    Представление страницы с подтверждением принятия брони
+    :return: 'Здесь будет подтверждение брони'
+    """
+    form = UserForm()
+    if request.method == "POST":
+        fio = form.client.data
+        phone = form.tel.data
+    one_teacher = [teacher for teacher in teachers if teacher['id'] == teacher_id]
+    return render_template('booking_done.html', list_teachers=one_teacher, day=day, hour=hour, client=fio, tel=phone,
+                           form=form)
+
+
+@app.route('/request/')
+def render_request():
+    """
+    Представление страницы для оформления заявки на репетитора
+    :return: 'Здесь будет форма заявки на репетитора'
+    """
+    form = UserForm()
+    return render_template('request.html', list_goals=goals, form=form)
+
+
+@app.route('/request_done/', methods=['POST'])
+def render_request_done():
+    """
+    Представление страницы с подтверждением принятия заявки на подбор репетитора
+    :return: 'Здесь будет подтверждение принятия заявки на подбор репетитора'
+    """
+    form = UserForm()
+    if request.method == "POST":
+        fio = form.client.data
+        phone = form.tel.data
+        goal = form.goal.data
+        cl_goal = goals.get(goal)[2:]
+        timer = form.time_hour.data
+        cl_timer = timers.get(timer)
+        return render_template('request_done.html', list_teachers=teachers, client=fio, tel=phone, goal=cl_goal,
+                               timer=cl_timer, form=form)
+    else:
+        return render_template('request.html')
 
 
 @app.route('/about/')
@@ -79,26 +146,18 @@ def render_about():
     return render_template('about.html')
 
 
-
-
 if __name__ == '__main__':
-#    with open('goals.txt', 'w') as f:
-#        json.dump(data.goals, f)
+    #    with open('goals.txt', 'w') as f:
+    #        json.dump(data.goals, f)
+    # with open('teachers.txt', 'w') as f:
+    #     json.dump(data.teachers, f)
 
     with open('goals.txt', 'r') as f:
         goals = json.load(f)
     with open('teachers.txt', 'r') as f:
         teachers = json.load(f)
-#    print(goals)
-#    print(teachers)
-
-#    for t in teachers:
- #           print(t['free']['mon'])
-
-#    list_teachers = teachers.sort(key=lambda x: x[0]['rating'])
-#    print(list_teachers)
 
     app.run('127.0.0.1', 7788, debug=True)
-    #app.run()  # for gunicorn server
+    # app.run()  # for gunicorn server
 
     toolbar = DebugToolbarExtension(app)

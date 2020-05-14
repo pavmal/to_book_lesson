@@ -31,9 +31,9 @@
               {% if hours %}
                 {% for hour in hours %}
                   {% if hour|length == 4 %}
-                    <a href="#" class="btn btn-outline-success m-2"> {{hour}} свободно </a>
+                    <a href="/booking/{{teacher['id']}}/{{day}}/{{hour}}/" class="btn btn-outline-success m-2"> {{hour}} свободно </a>
                   {% else %}
-                    <a href="#" class="btn btn-outline-success m-2">{{hour}} свободно</a>
+                    <a href="/booking/{{teacher['id']}}/{{day}}/{{hour}}/" class="btn btn-outline-success m-2">{{hour}} свободно</a>
                   {% endif %}
                 {% endfor %}
               {% else %}<p>Нет свободных уроков</p>{% endif %}
