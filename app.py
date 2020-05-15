@@ -4,7 +4,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, RadioField
 from wtforms.validators import Length, DataRequired, InputRequired
 from flask_debugtoolbar import DebugToolbarExtension
-
+import data
 # import data
 
 SECRET_KEY = os.urandom(32)
@@ -102,9 +102,15 @@ def render_booking_done(teacher_id, day, hour):
     if request.method == "POST":
         fio = form.client.data
         phone = form.tel.data
-    one_teacher = [teacher for teacher in teachers if teacher['id'] == teacher_id]
-    return render_template('booking_done.html', list_teachers=one_teacher, day=day, hour=hour, client=fio, tel=phone,
+        one_teacher = [teacher for teacher in teachers if teacher['id'] == teacher_id]
+        result = {'teacher': teacher_id, 'dayofweek': day, 'hour': hour, 'client': fio, 'phone': phone}
+        with open('booking.json', 'a') as f:
+            json.dump(result, f)
+
+        return render_template('booking_done.html', list_teachers=one_teacher, day=day, hour=hour, client=fio, tel=phone,
                            form=form)
+    else:
+        return render_template('booking.html')
 
 
 @app.route('/request/')
@@ -131,6 +137,10 @@ def render_request_done():
         cl_goal = goals.get(goal)[2:]
         timer = form.time_hour.data
         cl_timer = timers.get(timer)
+        result = {'goal': goals.get(goal), 'time': cl_timer, 'client': fio, 'phone': phone}
+        with open('request.json', 'a') as f:
+            json.dump(result, f)
+
         return render_template('request_done.html', list_teachers=teachers, client=fio, tel=phone, goal=cl_goal,
                                timer=cl_timer, form=form)
     else:
@@ -147,8 +157,8 @@ def render_about():
 
 
 if __name__ == '__main__':
-    #    with open('goals.txt', 'w') as f:
-    #        json.dump(data.goals, f)
+    # with open('goals.txt', 'w') as f:
+    #     json.dump(data.goals, f)
     # with open('teachers.txt', 'w') as f:
     #     json.dump(data.teachers, f)
 
