@@ -87,7 +87,6 @@ def render_booking(teacher_id, day, hour):
     :return: 'Здесь будет форма бронирования урока репетитора'
     """
     form = UserForm()
-    print(teacher_id, day, hour)
     one_teacher = [teacher for teacher in teachers if teacher['id'] == teacher_id]
     return render_template('booking.html', list_teachers=one_teacher, day=day, hour=hour, form=form)
 
@@ -104,8 +103,13 @@ def render_booking_done(teacher_id, day, hour):
         phone = form.tel.data
         one_teacher = [teacher for teacher in teachers if teacher['id'] == teacher_id]
         result = {'teacher': teacher_id, 'dayofweek': day, 'hour': hour, 'client': fio, 'phone': phone}
-        with open('booking.json', 'a') as f:
-            json.dump(result, f)
+        tmp_file = []
+        if os.path.exists('booking.json'):
+            with open('booking.json', 'r') as f:
+                tmp_file = json.load(f)
+        tmp_file.append(result)
+        with open('booking.json', 'w') as f:
+            json.dump(tmp_file, f)
 
         return render_template('booking_done.html', list_teachers=one_teacher, day=day, hour=hour, client=fio, tel=phone,
                            form=form)
@@ -138,8 +142,13 @@ def render_request_done():
         timer = form.time_hour.data
         cl_timer = timers.get(timer)
         result = {'goal': goals.get(goal), 'time': cl_timer, 'client': fio, 'phone': phone}
-        with open('request.json', 'a') as f:
-            json.dump(result, f)
+        tmp_file = []
+        if os.path.exists('request.json'):
+            with open('request.json', 'r') as f:
+                tmp_file = json.load(f)
+        tmp_file.append(result)
+        with open('request.json', 'w') as f:
+            json.dump(tmp_file, f)
 
         return render_template('request_done.html', list_teachers=teachers, client=fio, tel=phone, goal=cl_goal,
                                timer=cl_timer, form=form)
