@@ -9,6 +9,10 @@ from wtforms.validators import Length, DataRequired, InputRequired
 
 SECRET_KEY = os.urandom(32)
 timers = {'1': '1-2 часа', '2': '3-5 часов', '3': '5-7 часов', '4': '7-10 часов'}
+with open('goals.txt', 'r') as f:
+    goals = json.load(f)
+with open('teachers.txt', 'r') as f:
+    teachers = json.load(f)
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -172,10 +176,10 @@ if __name__ == '__main__':
     # with open('teachers.txt', 'w') as f:
     #     json.dump(data.teachers, f)
 
-    with open('goals.txt', 'r') as f:
-        goals = json.load(f)
-    with open('teachers.txt', 'r') as f:
-        teachers = json.load(f)
+    # with open('goals.txt', 'r') as f:
+    #     goals = json.load(f)
+    # with open('teachers.txt', 'r') as f:
+    #     teachers = json.load(f)
 
     # app.run('127.0.0.1', 7788, debug=True)
     app.run()  # for gunicorn server
