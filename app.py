@@ -3,8 +3,8 @@ from flask import Flask, render_template, request
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, RadioField
 from wtforms.validators import Length, DataRequired, InputRequired
-from flask_debugtoolbar import DebugToolbarExtension
-import data
+
+# from flask_debugtoolbar import DebugToolbarExtension
 # import data
 
 SECRET_KEY = os.urandom(32)
@@ -111,8 +111,9 @@ def render_booking_done(teacher_id, day, hour):
         with open('booking.json', 'w') as f:
             json.dump(tmp_file, f)
 
-        return render_template('booking_done.html', list_teachers=one_teacher, day=day, hour=hour, client=fio, tel=phone,
-                           form=form)
+        return render_template('booking_done.html', list_teachers=one_teacher, day=day, hour=hour, client=fio,
+                               tel=phone,
+                               form=form)
     else:
         return render_template('booking.html')
 
@@ -176,7 +177,7 @@ if __name__ == '__main__':
     with open('teachers.txt', 'r') as f:
         teachers = json.load(f)
 
-    app.run('127.0.0.1', 7788, debug=True)
-    # app.run()  # for gunicorn server
+    # app.run('127.0.0.1', 7788, debug=True)
+    app.run()  # for gunicorn server
 
-    toolbar = DebugToolbarExtension(app)
+#    toolbar = DebugToolbarExtension(app)
